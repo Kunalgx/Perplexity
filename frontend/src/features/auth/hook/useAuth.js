@@ -48,7 +48,7 @@ async function handleLogin({ email, password }) {
     } finally {
         dispatch(setLoading(false));
     }
-} 
+}
 
 return {
         handleRegister,

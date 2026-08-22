@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../hook/useAuth";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router";
 
 const Login = () => {
 
@@ -9,6 +11,7 @@ const Login = () => {
     password: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const user = useSelector(state => state.auth.user)
   const {handleLogin} = useAuth()
   const navigate = useNavigate()
   const handleChange = (event) => {
@@ -17,14 +20,19 @@ const Login = () => {
     setSubmitted(false);
   };
 
- const handleSubmit = async (event) => {
+const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitted(true);
 
-    await handleLogin(formData);
+    const success = await handleLogin(formData);
 
-    navigate("/");
+    if (success) {
+        navigate("/", { replace: true });
+    }
 };
+if (user) {
+    return <Navigate to="/" replace />;
+}
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#09090b] px-4 py-10 text-zinc-100">
