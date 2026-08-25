@@ -23,5 +23,9 @@ export const router = createBrowserRouter([
     {
         path:'/dashboard',
         element:<Navigate to="/" replace />
+    },
+    {
+        path:'/home-page',
+        element:<Navigate to="/" replace/>
     }
 ]);
