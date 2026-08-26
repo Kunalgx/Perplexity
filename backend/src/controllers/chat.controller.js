@@ -1,26 +1,66 @@
 import { response } from "express"
-import { generateResponse } from "../services/ai.service.js"
+import { generateResponse, generateChatTitle } from "../services/ai.service.js"
+import chatModel from "../models/chat.model.js"
+import messageModel from "../models/message.model.js"
 
-// export async function sendMessage(req,res) {
-//     const {message}= req.body
-//     const result = await genrateResponse(message)
-
-//     res.json({
-//        Aimessage:result
-//     })
-// }
 export async function sendMessage(req, res) {
     try {
-        const { message } = req.body
+        const { message, chat: chatId } = req.body
 
         console.log("User message:", message)
+        //Result and Title model
+        let chat;
+        let title = null;
 
-        const result = await generateResponse(message)
+        if (chatId) {
 
-        console.log("AI result:", result)
+            // Existing chat find karo
+            chat = await chatModel.findOne({
+                _id: chatId,
+                user: req.user.id
+            });
 
+            if (!chat) {
+                return res.status(404).json({
+                    message: "Chat not found"
+                });
+            }
+
+        } else {
+
+            // New chat
+            title = await generateChatTitle(message);
+
+            chat = await chatModel.create({
+                user: req.user.id,
+                title
+            });
+        }
+        const userMessage = await messageModel.create({
+            chat: chat._id,
+            content: message,
+            role: "user"
+        })
+
+        const messages = await messageModel.find({ chat: chat.id })
+        const result = await generateResponse(messages)
+
+        const aimessage = await messageModel.create({
+            chat: chat._id || chat.id,
+            content: result,
+            role: 'ai'
+        })
+
+        // //messageModel
+        // console.log("Gemini AI result:", result)
+        // console.log("Mistral AI result:", title)
+        console.log(messages)
         return res.status(200).json({
-            Aimessage: result
+
+            title,
+            chat,
+            aimessage,
+            userMessage
         })
 
     } catch (error) {

@@ -1,12 +1,17 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import {HumanMessage}from "langchain"
+import {ChatMistralAI} from "@langchain/mistralai"
+import {HumanMessage , SystemMessage,AIMessage }from "langchain"
 
-const model = new ChatGoogleGenerativeAI({
-  model: "gemini-3.7-flash",
+const geminiModel = new ChatGoogleGenerativeAI({
+  model: "gemini-3.6-flash",
   apiKey: process.env.GEMINI_API_KEY,
 });
+const mistralModel = new ChatMistralAI({
+  model:"mistral-small-latest",
+  apiKey:process.env.MISTRAL_API_KEY
+})
 
-export async function generateResponse(message) {
+export async function generateResponse(messages) {
 
     console.log("AI function called");
     console.log("API KEY exists:", !!process.env.GEMINI_API_KEY);
@@ -15,9 +20,13 @@ export async function generateResponse(message) {
 
         console.log("Calling Gemini...");
 
-        const response = await model.invoke([
-            new HumanMessage(message)
-        ]);
+        const response = await geminiModel.invoke(messages.map(msg=>{
+          if(msg.role=="user"){
+            return new HumanMessage(msg.content)
+          }else if(msg.role=="ai"){
+            return new AIMessage(msg.content)
+          }
+        }));
 
         console.log("Gemini response received");
 
@@ -30,4 +39,18 @@ export async function generateResponse(message) {
 
         throw error;
     }
+}
+export async function generateChatTitle(message) {
+  const response = await mistralModel.invoke([
+    new SystemMessage(`You are a helpful assistent that generate concise and description title for chat conversation .
+      User will Provided you with the first message of a chat conversation and will genrate a title that capture the essence of the
+      conversion in 2-4 Words . The title should be clear , relevent and , engaing, giving users a quicks understanding of the chat's topic.
+
+      `),
+      new HumanMessage(`
+        Generate a title for a chat converstion based on the following first message :
+        "${message}"
+        `)
+  ])
+  return response.text
 }
