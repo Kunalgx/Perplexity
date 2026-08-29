@@ -23,7 +23,7 @@ const Sidebar = ({ chats, activeChat, onNewChat, onSelectChat }) => (
       <nav className="space-y-1">
         {chats.map((chat) => (
           <button key={chat.id} onClick={() => onSelectChat(chat.id)} className={`group flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition ${activeChat === chat.id ? 'bg-[#202020] text-white' : 'text-[#c4c4c4] hover:bg-[#171717]'}`}>
-            <Icon className="text-[15px] text-[#8c8c8c]">□</Icon>
+            <Icon className="text-[15px] text-[#8c8c8c]">º</Icon>
             <span className="min-w-0 max-md:hidden"><span className="block truncate text-[13px]">{chat.title}</span><span className="block pt-0.5 text-[11px] text-[#707070]">{chat.time}</span></span>
           </button>
         ))}

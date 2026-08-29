@@ -41,7 +41,7 @@ if (user) {
         <div className="mb-8">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-red-400">Welcome back</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Sign in to your account</h1>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">Continues where you left off with your workspace.</p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">Continue where you left off with your workspace.</p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>

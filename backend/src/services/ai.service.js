@@ -1,6 +1,8 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {ChatMistralAI} from "@langchain/mistralai"
-import {HumanMessage , SystemMessage,AIMessage }from "langchain"
+import {HumanMessage , SystemMessage,AIMessage, tool,createAgent }from "langchain"
+import *as z from "zod"
+import { searchInternet } from "./internet.service.js";
 
 const geminiModel = new ChatGoogleGenerativeAI({
   model: "gemini-3.6-flash",
@@ -10,30 +12,53 @@ const mistralModel = new ChatMistralAI({
   model:"mistral-small-latest",
   apiKey:process.env.MISTRAL_API_KEY
 })
+const searchInternetTool= tool(
+  searchInternet,
+  {
+    name:"searchInternet",
+    description:"Use this tools to get the a latest information from the internet",
+    schema:z.object({
+      query:z.string().describe("The search query to lok up on the internet")
+    })
+  }
+)
+const agent = createAgent({
+  model:geminiModel,
+  tools:[searchInternetTool]
+})
 
 export async function generateResponse(messages) {
-
     console.log("AI function called");
     console.log("API KEY exists:", !!process.env.GEMINI_API_KEY);
 
     try {
-
         console.log("Calling Gemini...");
 
-        const response = await geminiModel.invoke(messages.map(msg=>{
-          if(msg.role=="user"){
-            return new HumanMessage(msg.content)
-          }else if(msg.role=="ai"){
-            return new AIMessage(msg.content)
-          }
-        }));
+        const formattedMessages = messages.map((msg) => {
+            if (msg.role === "user") {
+                return new HumanMessage(msg.content);
+            }
+
+            if (msg.role === "ai") {
+                return new AIMessage(msg.content);
+            }
+
+            if (msg.role === "system") {
+                return new SystemMessage(msg.content);
+            }
+
+            return null;
+        }).filter(Boolean);
+
+        const response = await agent.invoke({
+            messages: formattedMessages,
+        });
 
         console.log("Gemini response received");
 
-        return response.text;
+        return response.messages[response.messages.length - 1].text;
 
     } catch (error) {
-
         console.error("GEMINI ERROR:");
         console.error(error);
 
