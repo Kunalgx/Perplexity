@@ -12,7 +12,7 @@ const Sidebar = ({ chats, activeChat, onNewChat, onSelectChat }) => (
     <div className="flex items-center justify-between px-2 pb-5 max-md:justify-center">
       <span className="text-[19px] font-semibold tracking-[-0.04em] text-[#f5f5f5] max-md:hidden">Perplexity</span>
       <button className="grid h-9 w-9 place-items-center rounded-lg text-[#a6a6a6] transition hover:bg-[#1c1c1c] hover:text-white" aria-label="Collapse sidebar">
-        <Icon>◧</Icon>   
+        <Icon></Icon>   
       </button>
     </div>
     <button onClick={onNewChat} className="flex h-11 items-center gap-3 rounded-xl bg-[#202020] px-3 text-left text-[14px] font-medium text-white transition hover:bg-[#2a2a2a] max-md:justify-center max-md:px-0" aria-label="New chat">
@@ -131,7 +131,7 @@ export const Dashboard = () => {
         <header className="flex h-14 shrink-0 items-center justify-between px-5 max-md:px-4">
           <button onClick={newChat} className="flex items-center gap-2 text-sm font-medium text-[#dedede] hover:text-white md:hidden"><Icon>＋</Icon>New chat</button>
           <span className="text-sm text-[#858585] max-md:hidden">Perplexity</span>
-          <div className="ml-auto flex items-center gap-2"><button className="rounded-lg px-3 py-2 text-sm text-[#bdbdbd] hover:bg-[#222] hover:text-white">Share</button><button aria-label="More options" className="rounded-lg px-2 py-2 text-xl leading-none text-[#aaa] hover:bg-[#222]">···</button></div>
+          {/* <div className="ml-auto flex items-center gap-2"><button className="rounded-lg px-3 py-2 text-sm text-[#bdbdbd] hover:bg-[#222] hover:text-white">Share</button><button aria-label="More options" className="rounded-lg px-2 py-2 text-xl leading-none text-[#aaa] hover:bg-[#222]">···</button></div> */}
         </header>
         <div className="flex flex-1 flex-col items-center overflow-y-auto px-4">
           <div className="flex w-full max-w-[720px] flex-1 flex-col justify-center pb-28 pt-10">
