@@ -1,23 +1,48 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../hook/useAuth";
+import { useSelector } from "react-redux";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { handleRegister } = useAuth();
+  const authError = useSelector((state) => state.auth.error);
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((currentData) => ({ ...currentData, [name]: value }));
     setSubmitted(false);
+    setStatusMessage("");
+    setIsError(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitted(true);
+
+    const result = await handleRegister(formData);
+
+    if (result.success) {
+      const message = encodeURIComponent("Registration successful. Please verify your email before logging in.");
+      setStatusMessage("Registration successful. Please verify your email before logging in.");
+      setIsError(false);
+      setTimeout(() => {
+        navigate(`/login?registered=1&message=${message}`, { replace: true });
+      }, 800);
+      return;
+    }
+
+    setStatusMessage(result.message || authError || "Registration failed. Please try again.");
+    setIsError(true);
   };
 
   return (
@@ -79,7 +104,11 @@ const Register = () => {
           </button>
         </form>
 
-        {submitted && <p className="mt-5 text-center text-sm text-red-300">Registration form submitted.</p>}
+        {submitted && statusMessage && (
+          <p className={`mt-5 text-center text-sm ${isError ? "text-red-300" : "text-emerald-300"}`}>
+            {statusMessage}
+          </p>
+        )}
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           Already have an account? <Link className="font-semibold text-red-400 hover:text-red-300" to="/login">Sign in</Link>

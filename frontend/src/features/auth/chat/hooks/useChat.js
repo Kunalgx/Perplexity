@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux"
 import { setCurrentChatId, setError, setLoading } from "../chat.slice"
-import { getChats, getMessage, sendMessage } from "../pages/service/chat.api"
+import { getChats, getMessage, sendMessage, deleteChat } from "../pages/service/chat.api"
 import { initializeSocketConnection } from "../pages/service/chat.socket"
 
 export const useChat = () => {
@@ -31,10 +31,27 @@ export const useChat = () => {
         return getMessage(chatId)
     }
 
+    async function handleDeleteChat(chatId) {
+        dispatch(setLoading(true))
+        dispatch(setError(null))
+
+        try {
+            const data = await deleteChat(chatId)
+            return data
+        } catch (error) {
+            const messageText = error.response?.data?.message || 'Unable to delete this chat.'
+            dispatch(setError(messageText))
+            throw new Error(messageText)
+        } finally {
+            dispatch(setLoading(false))
+        }
+    }
+
     return{
         initializeSocketConnection,
         handleSendMessage,
         handleGetChats,
         handleGetMessages,
+        handleDeleteChat,
     }
 }

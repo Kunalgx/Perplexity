@@ -85,10 +85,7 @@ export async function verifyEmail(req, res) {
     const { token } = req.params;
 
     if (!token) {
-      return res.status(400).json({
-        message: "Verification token is missing",
-        success: false
-      });
+      return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("Verification token is missing"));
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -98,17 +95,11 @@ export async function verifyEmail(req, res) {
     });
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false
-      });
+      return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("User not found"));
     }
 
     if (user.verified === true) {
-      return res.status(200).send(`
-        <h2>Email Already Verified ✅</h2>
-        <p>Your email is already verified.</p>
-      `);
+      return res.redirect("http://localhost:5173/login?verified=1&message=" + encodeURIComponent("Email already verified. Please sign in."));
     }
 
     const updatedUser = await userModel.findByIdAndUpdate(
@@ -118,24 +109,14 @@ export async function verifyEmail(req, res) {
     );
 
     if (!updatedUser || updatedUser.verified !== true) {
-      return res.status(500).json({
-        message: "Unable to verify email",
-        success: false
-      });
+      return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("Unable to verify email"));
     }
 
-    return res.status(200).send(`
-      <h2>Email Verified Successfully! ✅</h2>
-      <p>Your email has been verified.</p>
-      
-    `);
+    return res.redirect("http://localhost:5173/login?verified=1&message=" + encodeURIComponent("Email verified successfully. Please sign in."));
   } catch (error) {
     console.error("Verification error:", error.name);
 
-    return res.status(400).json({
-      message: "Invalid or expired verification link",
-      success: false
-    });
+    return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("Invalid or expired verification link"));
   }
 }
 export async function loginController(req, res) {

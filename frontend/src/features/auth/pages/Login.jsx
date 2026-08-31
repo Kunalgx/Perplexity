@@ -1,38 +1,53 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../hook/useAuth";
 import { useSelector } from "react-redux";
-import { Navigate } from "react-router";
 
 const Login = () => {
-
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [submitted, setSubmitted] = useState(false);
-  const user = useSelector(state => state.auth.user)
-  const {handleLogin} = useAuth()
-  const navigate = useNavigate()
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  const user = useSelector((state) => state.auth.user);
+  const authError = useSelector((state) => state.auth.error);
+  const { handleLogin } = useAuth();
+  const navigate = useNavigate();
+  const registered = searchParams.get("registered");
+  const verificationMessage = searchParams.get("message");
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((currentData) => ({ ...currentData, [name]: value }));
     setSubmitted(false);
+    setStatusMessage("");
+    setIsError(false);
   };
 
-const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitted(true);
 
-    const success = await handleLogin(formData);
+    const result = await handleLogin(formData);
 
-    if (success) {
-        navigate("/", { replace: true });
+    if (result.success) {
+      navigate("/", { replace: true });
+      return;
     }
-};
-if (user) {
+
+    setStatusMessage(result.message || authError || "Invalid email or password.");
+    setIsError(true);
+  };
+
+  const verified = searchParams.get("verified");
+
+  if (user) {
     return <Navigate to="/" replace />;
-}
+  }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#09090b] px-4 py-10 text-zinc-100">
@@ -43,6 +58,20 @@ if (user) {
           <h1 className="text-3xl font-bold tracking-tight text-white">Sign in to your account</h1>
           <p className="mt-3 text-sm leading-6 text-zinc-400">Continue where you left off with your workspace.</p>
         </div>
+
+        {(registered === "1" || verified === "1" || verified === "0") && (
+          <p className={`mb-4 rounded-xl border px-3 py-2 text-sm ${
+            verified === "1"
+              ? "border-emerald-700/40 bg-emerald-950/30 text-emerald-300"
+              : "border-red-700/40 bg-red-950/30 text-red-300"
+          }`}>
+            {registered === "1"
+              ? verificationMessage || "Registration successful. Please verify your email before logging in."
+              : verified === "1"
+                ? "Email verified successfully. Please sign in."
+                : verificationMessage || "Email verification failed or the link has expired."}
+          </p>
+        )}
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-zinc-300" htmlFor="login-email">
@@ -78,7 +107,11 @@ if (user) {
           </button>
         </form>
 
-        {submitted && <p className="mt-5 text-center text-sm text-red-300">Login form submitted.</p>}
+        {submitted && statusMessage && (
+          <p className={`mt-5 text-center text-sm ${isError ? "text-red-300" : "text-emerald-300"}`}>
+            {statusMessage}
+          </p>
+        )}
 
         <p className="mt-8 text-center text-sm text-zinc-500">
           New here? <Link className="font-semibold text-red-400 hover:text-red-300" to="/register">Create an account</Link>
