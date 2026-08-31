@@ -2,8 +2,37 @@ import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
 
-const frontendBaseUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173";
-const backendBaseUrl = process.env.BACKEND_URL || process.env.CLIENT_URL || "http://localhost:3000";
+function getRequestBaseUrl(req) {
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
+  const host = req.get("host") || "localhost:3000";
+  return `${protocol.split(",")[0]}://${host}`;
+}
+
+function isLocalUrl(url) {
+  return /localhost|127\.0\.0\.1/.test(url);
+}
+
+function getBackendBaseUrl(req) {
+  const configuredUrl = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL;
+
+  if (configuredUrl && (process.env.NODE_ENV !== "production" || !isLocalUrl(configuredUrl))) {
+    return configuredUrl;
+  }
+
+  return getRequestBaseUrl(req);
+}
+
+function getFrontendBaseUrl(req) {
+  if (process.env.FRONTEND_URL && (process.env.NODE_ENV !== "production" || !isLocalUrl(process.env.FRONTEND_URL))) {
+    return process.env.FRONTEND_URL;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return getBackendBaseUrl(req);
+  }
+
+  return process.env.CLIENT_URL || "http://localhost:5173";
+}
 
 export async function registerController(req, res) {
   try {
@@ -20,6 +49,7 @@ export async function registerController(req, res) {
       });
     }
 
+
     const user = new userModel({
       username,
       email,
@@ -34,7 +64,7 @@ export async function registerController(req, res) {
       { expiresIn: "5d" }
     );
 
-    const verificationLink = `${backendBaseUrl}/api/auth/verify-email/${token}`;
+    const verificationLink = `${getBackendBaseUrl(req)}/api/auth/verify-email/${token}`;
 
     const text = `Hello ${username},
 
@@ -87,6 +117,7 @@ The Perplexity Team`;
 export async function verifyEmail(req, res) {
   try {
     const { token } = req.params;
+    const frontendBaseUrl = getFrontendBaseUrl(req);
 
     if (!token) {
       return res.redirect(`${frontendBaseUrl}/login?verified=0&message=${encodeURIComponent("Verification token is missing")}`);

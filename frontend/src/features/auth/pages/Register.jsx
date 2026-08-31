@@ -6,43 +6,95 @@ import { useSelector } from "react-redux";
 const Register = () => {
   const navigate = useNavigate();
   const { handleRegister } = useAuth();
-  const authError = useSelector((state) => state.auth.error);
 
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
   });
-  const [submitted, setSubmitted] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [authError, setAuthError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorAnimationKey, setErrorAnimationKey] = useState(0);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const isLoading = useSelector((state) => state.auth.loading);
+
+  const validateUsername = (username) => {
+    if (!username.trim()) return "Username is required.";
+    if (username.length < 3) return "Username must be at least 3 characters.";
+    if (username.length > 30) return "Username must be at most 30 characters.";
+    return "";
+  };
+
+  const validateEmail = (email) => {
+    if (!email.trim()) return "Email is required.";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Invalid email address.";
+    return "";
+  };
+
+  const validatePassword = (password) => {
+    if (!password) return "Password is required.";
+    if (password.length < 6) return "Password must be at least 6 characters.";
+    return "";
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((currentData) => ({ ...currentData, [name]: value }));
-    setSubmitted(false);
-    setStatusMessage("");
-    setIsError(false);
+
+    // Clear error for this field as user types after submission
+    if (hasSubmitted) {
+      const newErrors = { ...fieldErrors };
+      if (name === "username") {
+        newErrors.username = validateUsername(value);
+      } else if (name === "email") {
+        newErrors.email = validateEmail(value);
+      } else if (name === "password") {
+        newErrors.password = validatePassword(value);
+      }
+      setFieldErrors(newErrors);
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setSubmitted(true);
+    setHasSubmitted(true);
+
+    // Validate fields
+    const errors = {};
+    errors.username = validateUsername(formData.username);
+    errors.email = validateEmail(formData.email);
+    errors.password = validatePassword(formData.password);
+
+    setFieldErrors(errors);
+
+    // If validation fails, don't submit
+    if (errors.username || errors.email || errors.password) {
+      return;
+    }
+
+    // Clear messages before attempting registration
+    setAuthError("");
+    setSuccessMessage("");
 
     const result = await handleRegister(formData);
 
     if (result.success) {
+      setSuccessMessage("Registration successful. Please verify your email before logging in.");
       const message = encodeURIComponent("Registration successful. Please verify your email before logging in.");
-      setStatusMessage("Registration successful. Please verify your email before logging in.");
-      setIsError(false);
       setTimeout(() => {
         navigate(`/login?registered=1&message=${message}`, { replace: true });
       }, 800);
       return;
     }
 
-    setStatusMessage(result.message || authError || "Registration failed. Please try again.");
-    setIsError(true);
+    // Handle server errors
+    // Check if the error indicates duplicate username/email
+    const errorMessage = result.message || "Registration failed. Please try again.";
+    setAuthError(errorMessage);
+    setErrorAnimationKey((prev) => prev + 1);
   };
 
   return (
@@ -56,58 +108,112 @@ const Register = () => {
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <label className="block text-sm font-medium text-zinc-300" htmlFor="register-username">
-            Username
+          <div>
+            <label className="block text-sm font-medium text-zinc-300" htmlFor="register-username">
+              Username
+            </label>
             <input
               id="register-username"
-              className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+              className={`mt-2 w-full rounded-xl border bg-zinc-900/80 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
+                fieldErrors.username
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-zinc-800 focus:border-red-500 focus:ring-red-500/20"
+              }`}
               name="username"
               type="text"
               placeholder="Choose a username"
               value={formData.username}
               onChange={handleChange}
-              required
+              disabled={isLoading}
             />
-          </label>
+            {fieldErrors.username && (
+              <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>
+            )}
+          </div>
 
-          <label className="block text-sm font-medium text-zinc-300" htmlFor="register-email">
-            Email
+          <div>
+            <label className="block text-sm font-medium text-zinc-300" htmlFor="register-email">
+              Email
+            </label>
             <input
               id="register-email"
-              className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+              className={`mt-2 w-full rounded-xl border bg-zinc-900/80 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
+                fieldErrors.email
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-zinc-800 focus:border-red-500 focus:ring-red-500/20"
+              }`}
               name="email"
               type="email"
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
-              required
+              disabled={isLoading}
             />
-          </label>
+            {fieldErrors.email && (
+              <p className="mt-1 text-xs text-red-400">{fieldErrors.email}</p>
+            )}
+          </div>
 
-          <label className="block text-sm font-medium text-zinc-300" htmlFor="register-password">
-            Password
+          <div>
+            <label className="block text-sm font-medium text-zinc-300" htmlFor="register-password">
+              Password
+            </label>
             <input
               id="register-password"
-              className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+              className={`mt-2 w-full rounded-xl border bg-zinc-900/80 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
+                fieldErrors.password
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-zinc-800 focus:border-red-500 focus:ring-red-500/20"
+              }`}
               name="password"
               type="password"
               placeholder="Create a password"
               value={formData.password}
               onChange={handleChange}
-              minLength={6}
-              required
+              disabled={isLoading}
             />
-          </label>
+            {fieldErrors.password && (
+              <p className="mt-1 text-xs text-red-400">{fieldErrors.password}</p>
+            )}
+          </div>
 
-          <button className="w-full rounded-xl bg-gradient-to-r from-red-600 to-rose-500 px-4 py-3 font-semibold text-white shadow-lg shadow-red-950/40 transition hover:from-red-500 hover:to-rose-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" type="submit">
-            Create account
+          <button
+            className={`w-full rounded-xl px-4 py-3 font-semibold text-white shadow-lg shadow-red-950/40 transition focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
+              isLoading
+                ? "cursor-not-allowed bg-red-700/70 from-red-700 to-rose-600 hover:from-red-700 hover:to-rose-600"
+                : "bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400"
+            }`}
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Creating account...
+              </span>
+            ) : (
+              "Create account"
+            )}
           </button>
         </form>
 
-        {submitted && statusMessage && (
-          <p className={`mt-5 text-center text-sm ${isError ? "text-red-300" : "text-emerald-300"}`}>
-            {statusMessage}
-          </p>
+        {successMessage && (
+          <div className="mt-5 animate-in fade-in-50 slide-in-from-top-1 text-center">
+            <p className="rounded-lg bg-emerald-950/40 border border-emerald-700/50 px-3 py-2 text-sm text-emerald-300">
+              {successMessage}
+            </p>
+          </div>
+        )}
+
+        {authError && (
+          <div
+            key={errorAnimationKey}
+            className="mt-5 animate-in fade-in-50 slide-in-from-top-1 text-center"
+          >
+            <p className="rounded-lg bg-red-950/40 border border-red-700/50 px-3 py-2 text-sm text-red-300">
+              {authError}
+            </p>
+          </div>
         )}
 
         <p className="mt-8 text-center text-sm text-zinc-500">

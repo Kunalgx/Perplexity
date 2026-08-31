@@ -8,6 +8,7 @@ const authRouter = Router();
 // Register route
 authRouter.post("/register", registerValidation, registerController);
 // Verify email route
+authRouter.get("/verify-email", verifyEmail);
 authRouter.get("/verify-email/:token", verifyEmail);
 // Login route
 authRouter.post("/login", loginValidation, loginController);
