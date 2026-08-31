@@ -6,10 +6,8 @@ import { initSocket } from "./src/socket/server.soket.js";
 import dns from "dns";
 
 
-dns.setServers(["1.1.1.1",
-    "8.8.8.8"
-]);
-const PORT = process.env.PORT || 3000;
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+const PORT = Number(process.env.PORT) || 3000;
 
 const httpServer = http.createServer(app);
 initSocket(httpServer);
@@ -20,6 +18,6 @@ connectDb()
         process.exit(1);
     });
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 });

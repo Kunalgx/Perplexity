@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { register, login, getMe } from "../service/auth.api";
+import { register, login, logout, getMe } from "../service/auth.api";
 import { setUser, clearAuth, setLoading, setError } from "../auth.slice";
 
 export function useAuth() {
@@ -51,8 +51,14 @@ export function useAuth() {
         }
     }
 
-    function handleLogout() {
-        dispatch(clearAuth());
+    async function handleLogout() {
+        try {
+            await logout();
+        } catch (error) {
+            console.warn("Logout request failed, continuing local sign-out.", error);
+        } finally {
+            dispatch(clearAuth());
+        }
         return true;
     }
 

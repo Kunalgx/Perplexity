@@ -2,6 +2,9 @@ import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
 
+const frontendBaseUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173";
+const backendBaseUrl = process.env.BACKEND_URL || process.env.CLIENT_URL || "http://localhost:3000";
+
 export async function registerController(req, res) {
   try {
     const { username, email, password } = req.body;
@@ -31,7 +34,7 @@ export async function registerController(req, res) {
       { expiresIn: "5d" }
     );
 
-    const verificationLink = `http://localhost:3000/api/auth/verify-email/${token}`;
+    const verificationLink = `${backendBaseUrl}/api/auth/verify-email/${token}`;
 
     const text = `Hello ${username},
 
@@ -80,12 +83,13 @@ The Perplexity Team`;
     });
   }
 }
+
 export async function verifyEmail(req, res) {
   try {
     const { token } = req.params;
 
     if (!token) {
-      return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("Verification token is missing"));
+      return res.redirect(`${frontendBaseUrl}/login?verified=0&message=${encodeURIComponent("Verification token is missing")}`);
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -95,11 +99,11 @@ export async function verifyEmail(req, res) {
     });
 
     if (!user) {
-      return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("User not found"));
+      return res.redirect(`${frontendBaseUrl}/login?verified=0&message=${encodeURIComponent("User not found")}`);
     }
 
     if (user.verified === true) {
-      return res.redirect("http://localhost:5173/login?verified=1&message=" + encodeURIComponent("Email already verified. Please sign in."));
+      return res.redirect(`${frontendBaseUrl}/login?verified=1&message=${encodeURIComponent("Email already verified. Please sign in.")}`);
     }
 
     const updatedUser = await userModel.findByIdAndUpdate(
@@ -109,16 +113,17 @@ export async function verifyEmail(req, res) {
     );
 
     if (!updatedUser || updatedUser.verified !== true) {
-      return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("Unable to verify email"));
+      return res.redirect(`${frontendBaseUrl}/login?verified=0&message=${encodeURIComponent("Unable to verify email")}`);
     }
 
-    return res.redirect("http://localhost:5173/login?verified=1&message=" + encodeURIComponent("Email verified successfully. Please sign in."));
+    return res.redirect(`${frontendBaseUrl}/login?verified=1&message=${encodeURIComponent("Email verified successfully. Please sign in.")}`);
   } catch (error) {
     console.error("Verification error:", error.name);
 
-    return res.redirect("http://localhost:5173/login?verified=0&message=" + encodeURIComponent("Invalid or expired verification link"));
+    return res.redirect(`${frontendBaseUrl}/login?verified=0&message=${encodeURIComponent("Invalid or expired verification link")}`);
   }
 }
+
 export async function loginController(req, res) {
     const { email, password } = req.body;
 
@@ -161,20 +166,40 @@ export async function loginController(req, res) {
         process.env.JWT_SECRET,
         { expiresIn: "5d" }
     );
-   res.cookie("token", token)
-   res.status(200).json({
+
+    res.cookie("token", token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 5 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
         message: "Login successful",
-       user:{
-        id: user._id,
-        username: user.username,
-        email: user.email,
-       
-       }
-    })
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+        }
+    });
 }
+
+export async function logoutController(req, res) {
+    res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+    });
+
+    return res.status(200).json({
+        message: "Logged out successfully",
+        success: true,
+    });
+}
+
 export async function getMe(req, res) {
     const userId = req.user.id;
-    const user = await userModel.findById(userId).select("-password"); // Exclude password from the response
+    const user = await userModel.findById(userId).select("-password");
 
     if (!user) {
         return res.status(404).json({
@@ -182,10 +207,10 @@ export async function getMe(req, res) {
             success: false
         });
     }
+
     res.status(200).json({
         message: "User details fetched successfully",
         success: true,
         user
     });
-
 }
