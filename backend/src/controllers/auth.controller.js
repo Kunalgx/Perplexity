@@ -92,7 +92,16 @@ The Perplexity Team`;
       <p>Best regards,<br>The Perplexity Team</p>
     `;
 
-    await sendEmail(user.email, "Verify your email - Perplexity", text, html);
+    try {
+      await sendEmail(user.email, "Verify your email - Perplexity", text, html);
+    } catch (error) {
+      console.error("Verification email error:", error.message);
+
+      return res.status(502).json({
+        message: "Account created, but the verification email could not be sent. Please try again later.",
+        success: false,
+      });
+    }
 
     return res.status(201).json({
       message: "User registered successfully. Please verify your email.",
@@ -115,9 +124,10 @@ The Perplexity Team`;
 }
 
 export async function verifyEmail(req, res) {
+  const frontendBaseUrl = getFrontendBaseUrl(req);
+
   try {
     const { token } = req.params;
-    const frontendBaseUrl = getFrontendBaseUrl(req);
 
     if (!token) {
       return res.redirect(`${frontendBaseUrl}/login?verified=0&message=${encodeURIComponent("Verification token is missing")}`);
