@@ -97,7 +97,7 @@ export async function sendEmail(to, subject, text, html) {
   );
 
   if (!response.ok) {
-    throw new Error(`Gmail API send request failed with status ${response.status}`);
+    throw new Error(`Gmails API send request failed with status ${response.status}`);
   }
 
   return response.json();
