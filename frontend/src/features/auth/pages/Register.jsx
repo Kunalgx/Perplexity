@@ -82,10 +82,9 @@ const Register = () => {
     const result = await handleRegister(formData);
 
     if (result.success) {
-      setSuccessMessage("Registration successful. Please verify your email before logging in.");
-      const message = encodeURIComponent("Registration successful. Please verify your email before logging in.");
+      setSuccessMessage("Registration successful!");
       setTimeout(() => {
-        navigate(`/login?registered=1&message=${message}`, { replace: true });
+        navigate("/login?registered=1", { replace: true });
       }, 800);
       return;
     }

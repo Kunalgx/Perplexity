@@ -19,7 +19,6 @@ const Login = () => {
   const { handleLogin } = useAuth();
   const navigate = useNavigate();
   const registered = searchParams.get("registered");
-  const verificationMessage = searchParams.get("message");
 
   const validateEmail = (email) => {
     if (!email.trim()) return "Email is required.";
@@ -80,8 +79,6 @@ const Login = () => {
     setErrorAnimationKey((prev) => prev + 1);
   };
 
-  const verified = searchParams.get("verified");
-
   // Reset form errors when component unmounts or navigates away
   const resetForm = () => {
     setFieldErrors({});
@@ -103,17 +100,9 @@ const Login = () => {
           <p className="mt-3 text-sm leading-6 text-zinc-400">Continue where you left off with your workspace.</p>
         </div>
 
-        {(registered === "1" || verified === "1" || verified === "0") && (
-          <p className={`mb-4 rounded-xl border px-3 py-2 text-sm ${
-            verified === "1"
-              ? "border-emerald-700/40 bg-emerald-950/30 text-emerald-300"
-              : "border-red-700/40 bg-red-950/30 text-red-300"
-          }`}>
-            {registered === "1"
-              ? verificationMessage || "Registration successful. Please verify your email before logging in."
-              : verified === "1"
-                ? "Email verified successfully. Please sign in."
-                : verificationMessage || "Email verification failed or the link has expired."}
+        {registered === "1" && (
+          <p className="mb-4 rounded-xl border border-emerald-700/40 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-300">
+            Registration successful. Please sign in.
           </p>
         )}
 

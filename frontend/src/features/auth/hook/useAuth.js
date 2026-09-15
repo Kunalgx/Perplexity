@@ -76,7 +76,7 @@ export function useAuth() {
             return { success: true, message: data.message || "Login successful." };
         } catch (error) {
             // For login, use generic message for security
-            const message = error.response?.status === 401 || error.response?.status === 404 || error.response?.status === 403
+            const message = error.response?.status === 401 || error.response?.status === 404
                 ? "Invalid email or password."
                 : extractErrorMessage(error);
             dispatch(setError(message));
