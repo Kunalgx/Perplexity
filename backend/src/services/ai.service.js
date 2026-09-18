@@ -5,7 +5,7 @@ import *as z from "zod"
 import { searchInternet } from "./internet.service.js";
 
 const geminiModel = new ChatGoogleGenerativeAI({
-  model: "gemini-3.5-Lite",
+  model: "gemini-3.5-medium",
   apiKey: process.env.GEMINI_API_KEY,
 });
 const mistralModel = new ChatMistralAI({
